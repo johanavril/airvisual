@@ -5,8 +5,6 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func mockClientServer(result string) (*Client, *httptest.Server) {
@@ -64,7 +62,9 @@ func TestEndpoint(t *testing.T) {
 			got := client.endpoint(test.api, test.v)
 			want := test.want
 
-			assert.Equal(t, want, got)
+			if want != got {
+				t.Errorf("expected %s , got %s", want, got)
+			}
 		})
 	}
 }

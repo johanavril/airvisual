@@ -1,9 +1,8 @@
 package airvisual
 
 import (
+	"reflect"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func TestStates(t *testing.T) {
@@ -43,7 +42,9 @@ func TestStates(t *testing.T) {
 			got, _ := client.States("USA")
 			want := test.want
 
-			assert.Equal(t, want, got)
+			if !reflect.DeepEqual(want, got) {
+				t.Errorf("expected %#v , got %#v", want, got)
+			}
 		})
 	}
 }

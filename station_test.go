@@ -1,9 +1,8 @@
 package airvisual
 
 import (
+	"reflect"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func TestStations(t *testing.T) {
@@ -69,7 +68,9 @@ func TestStations(t *testing.T) {
 			got, _ := client.Stations("Addison", "New York", "USA")
 			want := test.want
 
-			assert.Equal(t, want, got)
+			if !reflect.DeepEqual(want, got) {
+				t.Errorf("expected %#v , got %#v", want, got)
+			}
 		})
 	}
 }
@@ -442,7 +443,9 @@ func TestStation(t *testing.T) {
 			got, _ := client.Station("US Embassy in Beijing", "Beijing", "Beijing", "China")
 			want := test.want
 
-			assert.Equal(t, want, got)
+			if !reflect.DeepEqual(want, got) {
+				t.Errorf("expected %#v , got %#v", want, got)
+			}
 		})
 	}
 }
@@ -815,7 +818,9 @@ func TestNearestStationIP(t *testing.T) {
 			got, _ := client.NearestStationIP()
 			want := test.want
 
-			assert.Equal(t, want, got)
+			if !reflect.DeepEqual(want, got) {
+				t.Errorf("expected %#v , got %#v", want, got)
+			}
 		})
 	}
 }
@@ -1188,7 +1193,9 @@ func TestNearestStationGPS(t *testing.T) {
 			got, _ := client.NearestStationGPS(116.466258, 39.954352)
 			want := test.want
 
-			assert.Equal(t, want, got)
+			if !reflect.DeepEqual(want, got) {
+				t.Errorf("expected %#v , got %#v", want, got)
+			}
 		})
 	}
 }

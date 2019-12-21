@@ -4,7 +4,6 @@ go:
 - master
 
 install:
-- go get github.com/stretchr/testify/assert
 - go get github.com/mattn/goveralls
 
 sudo: false

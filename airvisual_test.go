@@ -2,10 +2,9 @@ package airvisual
 
 import (
 	"net/http"
+	"reflect"
 	"testing"
 	"time"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func TestClient(t *testing.T) {
@@ -40,8 +39,9 @@ func TestClient(t *testing.T) {
 			got := test.got
 			want := test.want
 
-			assert.Equal(t, want.client, got.client)
-			assert.Equal(t, want.APIKey, got.APIKey)
+			if reflect.DeepEqual(want, got) {
+				t.Errorf("expected %#v , got %#v", want, got)
+			}
 		})
 	}
 }

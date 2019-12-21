@@ -1,9 +1,8 @@
 package airvisual
 
 import (
+	"reflect"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func TestCities(t *testing.T) {
@@ -43,7 +42,9 @@ func TestCities(t *testing.T) {
 			got, _ := client.Cities("New York", "USA")
 			want := test.want
 
-			assert.Equal(t, want, got)
+			if !reflect.DeepEqual(want, got) {
+				t.Errorf("expected %#v , got %#v", want, got)
+			}
 		})
 	}
 }
@@ -414,7 +415,9 @@ func TestCity(t *testing.T) {
 			got, _ := client.City("Los Angeles", "California", "USA")
 			want := test.want
 
-			assert.Equal(t, want, got)
+			if !reflect.DeepEqual(want, got) {
+				t.Errorf("expected %#v , got %#v", want, got)
+			}
 		})
 	}
 }
@@ -785,7 +788,9 @@ func TestNearestCityIP(t *testing.T) {
 			got, _ := client.NearestCityIP()
 			want := test.want
 
-			assert.Equal(t, want, got)
+			if !reflect.DeepEqual(want, got) {
+				t.Errorf("expected %#v , got %#v", want, got)
+			}
 		})
 	}
 }
@@ -1156,7 +1161,9 @@ func TestNearestCityGPS(t *testing.T) {
 			got, _ := client.NearestCityGPS(-118.2417, 34.0669)
 			want := test.want
 
-			assert.Equal(t, want, got)
+			if !reflect.DeepEqual(want, got) {
+				t.Errorf("expected %#v , got %#v", want, got)
+			}
 		})
 	}
 }
@@ -1226,7 +1233,9 @@ func TestCityRanking(t *testing.T) {
 			got, _ := client.CityRanking()
 			want := test.want
 
-			assert.Equal(t, want, got)
+			if !reflect.DeepEqual(want, got) {
+				t.Errorf("expected %#v , got %#v", want, got)
+			}
 		})
 	}
 }
