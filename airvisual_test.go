@@ -17,8 +17,9 @@ func TestClient(t *testing.T) {
 			name: "default client",
 			got:  New("API Key"),
 			want: &Client{
-				client: http.DefaultClient,
-				APIKey: "API Key",
+				client:       http.DefaultClient,
+				baseEndpoint: baseEndpoint,
+				APIKey:       "API Key",
 			},
 		},
 		{
@@ -28,8 +29,9 @@ func TestClient(t *testing.T) {
 				WithHTTPClient(&http.Client{Timeout: 5 * time.Second}),
 			),
 			want: &Client{
-				client: &http.Client{Timeout: 5 * time.Second},
-				APIKey: "API Key",
+				client:       &http.Client{Timeout: 5 * time.Second},
+				baseEndpoint: baseEndpoint,
+				APIKey:       "API Key",
 			},
 		},
 	}
@@ -39,7 +41,7 @@ func TestClient(t *testing.T) {
 			got := test.got
 			want := test.want
 
-			if reflect.DeepEqual(want, got) {
+			if !reflect.DeepEqual(want, got) {
 				t.Errorf("expected %#v , got %#v", want, got)
 			}
 		})
