@@ -65,7 +65,7 @@ type Ranking struct {
 	CurrentAQICN int `json:"current_aqi_cn"`
 }
 
-//Unit is a polution unit
+//Unit is a pollution unit
 type Unit struct {
 	CONC  float64 `json:"conc"`
 	AQIUS int     `json:"aqius"`
