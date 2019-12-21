@@ -1,6 +1,7 @@
 # airvisual
 [![GoDoc](https://godoc.org/github.com/johanavril/airvisual?status.svg)](https://godoc.org/github.com/johanavril/airvisual)
 [![Go Report Card](https://goreportcard.com/badge/github.com/johanavril/airvisual)](https://goreportcard.com/report/github.com/johanavril/airvisual)
+[![Build Status](https://travis-ci.org/johanavril/airvisual.svg?branch=master)](https://travis-ci.org/johanavril/airvisual)
 
 ## Description
 airvisual is a Go wrapper for [AirVisual's API](https://api-docs.airvisual.com/). This package goal is to assist development on air quality application using AirVisual's API
