@@ -270,7 +270,7 @@ func TestStation(t *testing.T) {
 						Coordinates: []float64{116.466258, 39.954352},
 					},
 					Forecasts: []*Forecast{
-						&Forecast{
+						{
 							TS:    "2019-08-05T03:00:00.000Z",
 							AQIUS: 41,
 							AQICN: 14,
@@ -282,7 +282,7 @@ func TestStation(t *testing.T) {
 							WD:    228,
 							IC:    "03n",
 						},
-						&Forecast{
+						{
 							TS:    "2019-08-07T00:00:00.000Z",
 							AQIUS: 68,
 							AQICN: 29,
@@ -338,7 +338,7 @@ func TestStation(t *testing.T) {
 					},
 					History: &History{
 						Weather: []*Weather{
-							&Weather{
+							{
 								TS: "2019-08-01T23:00:00.000Z",
 								TP: 37,
 								PR: 1007,
@@ -347,7 +347,7 @@ func TestStation(t *testing.T) {
 								WD: 110,
 								IC: "01d",
 							},
-							&Weather{
+							{
 								TS: "2019-08-01T04:00:00.000Z",
 								TP: 31,
 								PR: 1005,
@@ -358,7 +358,7 @@ func TestStation(t *testing.T) {
 							},
 						},
 						Pollution: []*Pollution{
-							&Pollution{
+							{
 								TS:     "2019-08-04T19:00:00.000Z",
 								AQIUS:  70,
 								MAINUS: "p2",
@@ -395,7 +395,7 @@ func TestStation(t *testing.T) {
 									AQICN: 2,
 								},
 							},
-							&Pollution{
+							{
 								TS:     "2019-08-04T18:00:00.000Z",
 								AQIUS:  57,
 								MAINUS: "p2",
@@ -643,7 +643,7 @@ func TestNearestStationIP(t *testing.T) {
 						Coordinates: []float64{116.466258, 39.954352},
 					},
 					Forecasts: []*Forecast{
-						&Forecast{
+						{
 							TS:    "2019-08-05T03:00:00.000Z",
 							AQIUS: 41,
 							AQICN: 14,
@@ -655,7 +655,7 @@ func TestNearestStationIP(t *testing.T) {
 							WD:    228,
 							IC:    "03n",
 						},
-						&Forecast{
+						{
 							TS:    "2019-08-07T00:00:00.000Z",
 							AQIUS: 68,
 							AQICN: 29,
@@ -711,7 +711,7 @@ func TestNearestStationIP(t *testing.T) {
 					},
 					History: &History{
 						Weather: []*Weather{
-							&Weather{
+							{
 								TS: "2019-08-01T23:00:00.000Z",
 								TP: 37,
 								PR: 1007,
@@ -720,7 +720,7 @@ func TestNearestStationIP(t *testing.T) {
 								WD: 110,
 								IC: "01d",
 							},
-							&Weather{
+							{
 								TS: "2019-08-01T04:00:00.000Z",
 								TP: 31,
 								PR: 1005,
@@ -731,7 +731,7 @@ func TestNearestStationIP(t *testing.T) {
 							},
 						},
 						Pollution: []*Pollution{
-							&Pollution{
+							{
 								TS:     "2019-08-04T19:00:00.000Z",
 								AQIUS:  70,
 								MAINUS: "p2",
@@ -768,7 +768,7 @@ func TestNearestStationIP(t *testing.T) {
 									AQICN: 2,
 								},
 							},
-							&Pollution{
+							{
 								TS:     "2019-08-04T18:00:00.000Z",
 								AQIUS:  57,
 								MAINUS: "p2",
@@ -1016,7 +1016,7 @@ func TestNearestStationGPS(t *testing.T) {
 						Coordinates: []float64{116.466258, 39.954352},
 					},
 					Forecasts: []*Forecast{
-						&Forecast{
+						{
 							TS:    "2019-08-05T03:00:00.000Z",
 							AQIUS: 41,
 							AQICN: 14,
@@ -1028,7 +1028,7 @@ func TestNearestStationGPS(t *testing.T) {
 							WD:    228,
 							IC:    "03n",
 						},
-						&Forecast{
+						{
 							TS:    "2019-08-07T00:00:00.000Z",
 							AQIUS: 68,
 							AQICN: 29,
@@ -1084,7 +1084,7 @@ func TestNearestStationGPS(t *testing.T) {
 					},
 					History: &History{
 						Weather: []*Weather{
-							&Weather{
+							{
 								TS: "2019-08-01T23:00:00.000Z",
 								TP: 37,
 								PR: 1007,
@@ -1093,7 +1093,7 @@ func TestNearestStationGPS(t *testing.T) {
 								WD: 110,
 								IC: "01d",
 							},
-							&Weather{
+							{
 								TS: "2019-08-01T04:00:00.000Z",
 								TP: 31,
 								PR: 1005,
@@ -1104,7 +1104,7 @@ func TestNearestStationGPS(t *testing.T) {
 							},
 						},
 						Pollution: []*Pollution{
-							&Pollution{
+							{
 								TS:     "2019-08-04T19:00:00.000Z",
 								AQIUS:  70,
 								MAINUS: "p2",
@@ -1141,7 +1141,7 @@ func TestNearestStationGPS(t *testing.T) {
 									AQICN: 2,
 								},
 							},
-							&Pollution{
+							{
 								TS:     "2019-08-04T18:00:00.000Z",
 								AQIUS:  57,
 								MAINUS: "p2",

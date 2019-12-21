@@ -242,7 +242,7 @@ func TestCity(t *testing.T) {
 						Coordinates: []float64{-118.2417, 34.0669},
 					},
 					Forecasts: []*Forecast{
-						&Forecast{
+						{
 							TS:    "2019-08-05T03:00:00.000Z",
 							AQIUS: 41,
 							AQICN: 14,
@@ -254,7 +254,7 @@ func TestCity(t *testing.T) {
 							WD:    228,
 							IC:    "03n",
 						},
-						&Forecast{
+						{
 							TS:    "2019-08-07T00:00:00.000Z",
 							AQIUS: 68,
 							AQICN: 29,
@@ -310,7 +310,7 @@ func TestCity(t *testing.T) {
 					},
 					History: &History{
 						Weather: []*Weather{
-							&Weather{
+							{
 								TS: "2019-08-01T23:00:00.000Z",
 								TP: 37,
 								PR: 1007,
@@ -319,7 +319,7 @@ func TestCity(t *testing.T) {
 								WD: 110,
 								IC: "01d",
 							},
-							&Weather{
+							{
 								TS: "2019-08-01T04:00:00.000Z",
 								TP: 31,
 								PR: 1005,
@@ -330,7 +330,7 @@ func TestCity(t *testing.T) {
 							},
 						},
 						Pollution: []*Pollution{
-							&Pollution{
+							{
 								TS:     "2019-08-04T19:00:00.000Z",
 								AQIUS:  70,
 								MAINUS: "p2",
@@ -367,7 +367,7 @@ func TestCity(t *testing.T) {
 									AQICN: 2,
 								},
 							},
-							&Pollution{
+							{
 								TS:     "2019-08-04T18:00:00.000Z",
 								AQIUS:  57,
 								MAINUS: "p2",
@@ -613,7 +613,7 @@ func TestNearestCityIP(t *testing.T) {
 						Coordinates: []float64{-118.2417, 34.0669},
 					},
 					Forecasts: []*Forecast{
-						&Forecast{
+						{
 							TS:    "2019-08-05T03:00:00.000Z",
 							AQIUS: 41,
 							AQICN: 14,
@@ -625,7 +625,7 @@ func TestNearestCityIP(t *testing.T) {
 							WD:    228,
 							IC:    "03n",
 						},
-						&Forecast{
+						{
 							TS:    "2019-08-07T00:00:00.000Z",
 							AQIUS: 68,
 							AQICN: 29,
@@ -681,7 +681,7 @@ func TestNearestCityIP(t *testing.T) {
 					},
 					History: &History{
 						Weather: []*Weather{
-							&Weather{
+							{
 								TS: "2019-08-01T23:00:00.000Z",
 								TP: 37,
 								PR: 1007,
@@ -690,7 +690,7 @@ func TestNearestCityIP(t *testing.T) {
 								WD: 110,
 								IC: "01d",
 							},
-							&Weather{
+							{
 								TS: "2019-08-01T04:00:00.000Z",
 								TP: 31,
 								PR: 1005,
@@ -701,7 +701,7 @@ func TestNearestCityIP(t *testing.T) {
 							},
 						},
 						Pollution: []*Pollution{
-							&Pollution{
+							{
 								TS:     "2019-08-04T19:00:00.000Z",
 								AQIUS:  70,
 								MAINUS: "p2",
@@ -738,7 +738,7 @@ func TestNearestCityIP(t *testing.T) {
 									AQICN: 2,
 								},
 							},
-							&Pollution{
+							{
 								TS:     "2019-08-04T18:00:00.000Z",
 								AQIUS:  57,
 								MAINUS: "p2",
@@ -984,7 +984,7 @@ func TestNearestCityGPS(t *testing.T) {
 						Coordinates: []float64{-118.2417, 34.0669},
 					},
 					Forecasts: []*Forecast{
-						&Forecast{
+						{
 							TS:    "2019-08-05T03:00:00.000Z",
 							AQIUS: 41,
 							AQICN: 14,
@@ -996,7 +996,7 @@ func TestNearestCityGPS(t *testing.T) {
 							WD:    228,
 							IC:    "03n",
 						},
-						&Forecast{
+						{
 							TS:    "2019-08-07T00:00:00.000Z",
 							AQIUS: 68,
 							AQICN: 29,
@@ -1052,7 +1052,7 @@ func TestNearestCityGPS(t *testing.T) {
 					},
 					History: &History{
 						Weather: []*Weather{
-							&Weather{
+							{
 								TS: "2019-08-01T23:00:00.000Z",
 								TP: 37,
 								PR: 1007,
@@ -1061,7 +1061,7 @@ func TestNearestCityGPS(t *testing.T) {
 								WD: 110,
 								IC: "01d",
 							},
-							&Weather{
+							{
 								TS: "2019-08-01T04:00:00.000Z",
 								TP: 31,
 								PR: 1005,
@@ -1072,7 +1072,7 @@ func TestNearestCityGPS(t *testing.T) {
 							},
 						},
 						Pollution: []*Pollution{
-							&Pollution{
+							{
 								TS:     "2019-08-04T19:00:00.000Z",
 								AQIUS:  70,
 								MAINUS: "p2",
@@ -1109,7 +1109,7 @@ func TestNearestCityGPS(t *testing.T) {
 									AQICN: 2,
 								},
 							},
-							&Pollution{
+							{
 								TS:     "2019-08-04T18:00:00.000Z",
 								AQIUS:  57,
 								MAINUS: "p2",
