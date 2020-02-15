@@ -1,6 +1,7 @@
 package airvisual
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 )
@@ -9,7 +10,8 @@ func TestCountries(t *testing.T) {
 	tests := []struct {
 		name   string
 		result string
-		want   *Countries
+		want   []*Countries
+		err    error
 	}{
 		{
 			name: "countries request success",
@@ -24,13 +26,20 @@ func TestCountries(t *testing.T) {
     }
   ]
 }`,
-			want: &Countries{
-				Status: "success",
-				Data: []*CountriesData{
-					{Country: "Andorra"},
-					{Country: "Argentina"},
-				},
+			want: []*Countries{
+				{Country: "Andorra"},
+				{Country: "Argentina"},
 			},
+			err: nil,
+		},
+		{
+			name: "countries request failed",
+			result: `{
+  "status": "call_limit_reached",
+  "data": []
+}`,
+			want: nil,
+			err:  fmt.Errorf("unable to list countries: %v", "call_limit_reached"),
 		},
 	}
 
@@ -39,11 +48,14 @@ func TestCountries(t *testing.T) {
 			client, server := mockClientServer(test.result)
 			defer server.Close()
 
-			got, _ := client.Countries()
+			got, err := client.Countries()
 			want := test.want
 
 			if !reflect.DeepEqual(want, got) {
 				t.Errorf("expected %#v , got %#v", want, got)
+			}
+			if !reflect.DeepEqual(test.err, err) {
+				t.Errorf("expected %#v , got %#v", test.err, err)
 			}
 		})
 	}

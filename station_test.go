@@ -1,6 +1,7 @@
 package airvisual
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 )
@@ -9,7 +10,8 @@ func TestStations(t *testing.T) {
 	tests := []struct {
 		name   string
 		result string
-		want   *Stations
+		want   []*Stations
+		err    error
 	}{
 		{
 			name: "stations request success",
@@ -38,25 +40,32 @@ func TestStations(t *testing.T) {
     }
   ]
 }`,
-			want: &Stations{
-				Status: "success",
-				Data: []*StationsData{
-					{
-						Location: &Location{
-							Type:        "Point",
-							Coordinates: []float64{116.466258, 39.954352},
-						},
-						Station: "US Embassy in Beijing",
+			want: []*Stations{
+				{
+					Location: &Location{
+						Type:        "Point",
+						Coordinates: []float64{116.466258, 39.954352},
 					},
-					{
-						Location: &Location{
-							Type:        "Point",
-							Coordinates: []float64{116.2148532181, 40.0078007235},
-						},
-						Station: "Botanical Garden",
+					Station: "US Embassy in Beijing",
+				},
+				{
+					Location: &Location{
+						Type:        "Point",
+						Coordinates: []float64{116.2148532181, 40.0078007235},
 					},
+					Station: "Botanical Garden",
 				},
 			},
+			err: nil,
+		},
+		{
+			name: "stations request failed",
+			result: `{
+  "status": "call_limit_reached",
+  "data": []
+}`,
+			want: nil,
+			err:  fmt.Errorf("unable to list stations: %v", "call_limit_reached"),
 		},
 	}
 
@@ -65,11 +74,14 @@ func TestStations(t *testing.T) {
 			client, server := mockClientServer(test.result)
 			defer server.Close()
 
-			got, _ := client.Stations("Addison", "New York", "USA")
+			got, err := client.Stations("Addison", "New York", "USA")
 			want := test.want
 
 			if !reflect.DeepEqual(want, got) {
 				t.Errorf("expected %#v , got %#v", want, got)
+			}
+			if !reflect.DeepEqual(test.err, err) {
+				t.Errorf("expected %#v , got %#v", test.err, err)
 			}
 		})
 	}
@@ -80,6 +92,7 @@ func TestStation(t *testing.T) {
 		name   string
 		result string
 		want   *Station
+		err    error
 	}{
 		{
 			name: "station request success",
@@ -260,37 +273,84 @@ func TestStation(t *testing.T) {
   }
 }`,
 			want: &Station{
-				Status: "success",
-				Data: &StationData{
-					Name:    "US Embassy in Beijing",
-					City:    "Beijing",
-					State:   "Beijing",
-					Country: "China",
-					Location: &Location{
-						Type:        "Point",
-						Coordinates: []float64{116.466258, 39.954352},
+				Name:    "US Embassy in Beijing",
+				City:    "Beijing",
+				State:   "Beijing",
+				Country: "China",
+				Location: &Location{
+					Type:        "Point",
+					Coordinates: []float64{116.466258, 39.954352},
+				},
+				Forecasts: []*Forecast{
+					{
+						TS:    "2019-08-05T03:00:00.000Z",
+						AQIUS: 41,
+						AQICN: 14,
+						TP:    25,
+						TPMin: 25,
+						PR:    962,
+						HU:    65,
+						WS:    1,
+						WD:    228,
+						IC:    "03n",
 					},
-					Forecasts: []*Forecast{
-						{
-							TS:    "2019-08-05T03:00:00.000Z",
-							AQIUS: 41,
-							AQICN: 14,
-							TP:    25,
-							TPMin: 25,
-							PR:    962,
-							HU:    65,
-							WS:    1,
-							WD:    228,
-							IC:    "03n",
+					{
+						TS:    "2019-08-07T00:00:00.000Z",
+						AQIUS: 68,
+						AQICN: 29,
+					},
+				},
+				Current: &Current{
+					Weather: &Weather{
+						TS: "2019-08-01T23:00:00.000Z",
+						TP: 37,
+						PR: 1007,
+						HU: 14,
+						WS: 1,
+						WD: 110,
+						IC: "01d",
+					},
+					Pollution: &Pollution{
+						TS:     "2019-08-04T19:00:00.000Z",
+						AQIUS:  70,
+						MAINUS: "p2",
+						AQICN:  30,
+						MAINCN: "p2",
+						P2: &Unit{
+							CONC:  21,
+							AQIUS: 70,
+							AQICN: 30,
 						},
-						{
-							TS:    "2019-08-07T00:00:00.000Z",
-							AQIUS: 68,
-							AQICN: 29,
+						P1: &Unit{
+							CONC:  30,
+							AQIUS: 27,
+							AQICN: 30,
+						},
+						O3: &Unit{
+							CONC:  48,
+							AQIUS: 38,
+							AQICN: 30,
+						},
+						N2: &Unit{
+							CONC:  8,
+							AQIUS: 2,
+							AQICN: 8,
+						},
+						S2: &Unit{
+							CONC:  1,
+							AQIUS: 1,
+							AQICN: 3,
+						},
+						CO: &Unit{
+							CONC:  0.2,
+							AQIUS: 2,
+							AQICN: 2,
 						},
 					},
-					Current: &Current{
-						Weather: &Weather{
+				},
+				History: &History{
+					Weather: []*Weather{
+						{
 							TS: "2019-08-01T23:00:00.000Z",
 							TP: 37,
 							PR: 1007,
@@ -299,7 +359,18 @@ func TestStation(t *testing.T) {
 							WD: 110,
 							IC: "01d",
 						},
-						Pollution: &Pollution{
+						{
+							TS: "2019-08-01T04:00:00.000Z",
+							TP: 31,
+							PR: 1005,
+							HU: 26,
+							WS: 1,
+							WD: 40,
+							IC: "01n",
+						},
+					},
+					Pollution: []*Pollution{
+						{
 							TS:     "2019-08-04T19:00:00.000Z",
 							AQIUS:  70,
 							MAINUS: "p2",
@@ -336,102 +407,51 @@ func TestStation(t *testing.T) {
 								AQICN: 2,
 							},
 						},
-					},
-					History: &History{
-						Weather: []*Weather{
-							{
-								TS: "2019-08-01T23:00:00.000Z",
-								TP: 37,
-								PR: 1007,
-								HU: 14,
-								WS: 1,
-								WD: 110,
-								IC: "01d",
+						{
+							TS:     "2019-08-04T18:00:00.000Z",
+							AQIUS:  57,
+							MAINUS: "p2",
+							AQICN:  28,
+							MAINCN: "o3",
+							P2: &Unit{
+								CONC:  15,
+								AQIUS: 57,
+								AQICN: 21,
 							},
-							{
-								TS: "2019-08-01T04:00:00.000Z",
-								TP: 31,
-								PR: 1005,
-								HU: 26,
-								WS: 1,
-								WD: 40,
-								IC: "01n",
+							P1: &Unit{
+								CONC:  22,
+								AQIUS: 20,
+								AQICN: 22,
 							},
-						},
-						Pollution: []*Pollution{
-							{
-								TS:     "2019-08-04T19:00:00.000Z",
-								AQIUS:  70,
-								MAINUS: "p2",
-								AQICN:  30,
-								MAINCN: "p2",
-								P2: &Unit{
-									CONC:  21,
-									AQIUS: 70,
-									AQICN: 30,
-								},
-								P1: &Unit{
-									CONC:  30,
-									AQIUS: 27,
-									AQICN: 30,
-								},
-								O3: &Unit{
-									CONC:  48,
-									AQIUS: 38,
-									AQICN: 30,
-								},
-								N2: &Unit{
-									CONC:  8,
-									AQIUS: 2,
-									AQICN: 8,
-								},
-								S2: &Unit{
-									CONC:  1,
-									AQIUS: 1,
-									AQICN: 3,
-								},
-								CO: &Unit{
-									CONC:  0.2,
-									AQIUS: 2,
-									AQICN: 2,
-								},
+							O3: &Unit{
+								CONC:  45,
+								AQIUS: 36,
+								AQICN: 28,
 							},
-							{
-								TS:     "2019-08-04T18:00:00.000Z",
-								AQIUS:  57,
-								MAINUS: "p2",
-								AQICN:  28,
-								MAINCN: "o3",
-								P2: &Unit{
-									CONC:  15,
-									AQIUS: 57,
-									AQICN: 21,
-								},
-								P1: &Unit{
-									CONC:  22,
-									AQIUS: 20,
-									AQICN: 22,
-								},
-								O3: &Unit{
-									CONC:  45,
-									AQIUS: 36,
-									AQICN: 28,
-								},
-								N2: &Unit{
-									CONC:  8,
-									AQIUS: 2,
-									AQICN: 8,
-								},
-								CO: &Unit{
-									CONC:  0.2,
-									AQIUS: 2,
-									AQICN: 2,
-								},
+							N2: &Unit{
+								CONC:  8,
+								AQIUS: 2,
+								AQICN: 8,
+							},
+							CO: &Unit{
+								CONC:  0.2,
+								AQIUS: 2,
+								AQICN: 2,
 							},
 						},
 					},
 				},
 			},
+			err: nil,
+		},
+		{
+			name: "station request failed",
+			result: `{
+  "status": "call_limit_reached",
+  "data": null
+}`,
+			want: nil,
+			err:  fmt.Errorf("unable to retrieve station data: %v", "call_limit_reached"),
 		},
 	}
 
@@ -440,11 +460,14 @@ func TestStation(t *testing.T) {
 			client, server := mockClientServer(test.result)
 			defer server.Close()
 
-			got, _ := client.Station("US Embassy in Beijing", "Beijing", "Beijing", "China")
+			got, err := client.Station("US Embassy in Beijing", "Beijing", "Beijing", "China")
 			want := test.want
 
 			if !reflect.DeepEqual(want, got) {
 				t.Errorf("expected %#v , got %#v", want, got)
+			}
+			if !reflect.DeepEqual(test.err, err) {
+				t.Errorf("expected %#v , got %#v", test.err, err)
 			}
 		})
 	}
@@ -454,7 +477,8 @@ func TestNearestStationIP(t *testing.T) {
 	tests := []struct {
 		name   string
 		result string
-		want   *NearestStation
+		want   *Station
+		err    error
 	}{
 		{
 			name: "nearest station by IP request success",
@@ -634,38 +658,85 @@ func TestNearestStationIP(t *testing.T) {
     }
   }
 }`,
-			want: &NearestStation{
-				Status: "success",
-				Data: &StationData{
-					Name:    "US Embassy in Beijing",
-					City:    "Beijing",
-					State:   "Beijing",
-					Country: "China",
-					Location: &Location{
-						Type:        "Point",
-						Coordinates: []float64{116.466258, 39.954352},
+			want: &Station{
+				Name:    "US Embassy in Beijing",
+				City:    "Beijing",
+				State:   "Beijing",
+				Country: "China",
+				Location: &Location{
+					Type:        "Point",
+					Coordinates: []float64{116.466258, 39.954352},
+				},
+				Forecasts: []*Forecast{
+					{
+						TS:    "2019-08-05T03:00:00.000Z",
+						AQIUS: 41,
+						AQICN: 14,
+						TP:    25,
+						TPMin: 25,
+						PR:    962,
+						HU:    65,
+						WS:    1,
+						WD:    228,
+						IC:    "03n",
 					},
-					Forecasts: []*Forecast{
-						{
-							TS:    "2019-08-05T03:00:00.000Z",
-							AQIUS: 41,
-							AQICN: 14,
-							TP:    25,
-							TPMin: 25,
-							PR:    962,
-							HU:    65,
-							WS:    1,
-							WD:    228,
-							IC:    "03n",
+					{
+						TS:    "2019-08-07T00:00:00.000Z",
+						AQIUS: 68,
+						AQICN: 29,
+					},
+				},
+				Current: &Current{
+					Weather: &Weather{
+						TS: "2019-08-01T23:00:00.000Z",
+						TP: 37,
+						PR: 1007,
+						HU: 14,
+						WS: 1,
+						WD: 110,
+						IC: "01d",
+					},
+					Pollution: &Pollution{
+						TS:     "2019-08-04T19:00:00.000Z",
+						AQIUS:  70,
+						MAINUS: "p2",
+						AQICN:  30,
+						MAINCN: "p2",
+						P2: &Unit{
+							CONC:  21,
+							AQIUS: 70,
+							AQICN: 30,
 						},
-						{
-							TS:    "2019-08-07T00:00:00.000Z",
-							AQIUS: 68,
-							AQICN: 29,
+						P1: &Unit{
+							CONC:  30,
+							AQIUS: 27,
+							AQICN: 30,
+						},
+						O3: &Unit{
+							CONC:  48,
+							AQIUS: 38,
+							AQICN: 30,
+						},
+						N2: &Unit{
+							CONC:  8,
+							AQIUS: 2,
+							AQICN: 8,
+						},
+						S2: &Unit{
+							CONC:  1,
+							AQIUS: 1,
+							AQICN: 3,
+						},
+						CO: &Unit{
+							CONC:  0.2,
+							AQIUS: 2,
+							AQICN: 2,
 						},
 					},
-					Current: &Current{
-						Weather: &Weather{
+				},
+				History: &History{
+					Weather: []*Weather{
+						{
 							TS: "2019-08-01T23:00:00.000Z",
 							TP: 37,
 							PR: 1007,
@@ -674,7 +745,18 @@ func TestNearestStationIP(t *testing.T) {
 							WD: 110,
 							IC: "01d",
 						},
-						Pollution: &Pollution{
+						{
+							TS: "2019-08-01T04:00:00.000Z",
+							TP: 31,
+							PR: 1005,
+							HU: 26,
+							WS: 1,
+							WD: 40,
+							IC: "01n",
+						},
+					},
+					Pollution: []*Pollution{
+						{
 							TS:     "2019-08-04T19:00:00.000Z",
 							AQIUS:  70,
 							MAINUS: "p2",
@@ -711,102 +793,51 @@ func TestNearestStationIP(t *testing.T) {
 								AQICN: 2,
 							},
 						},
-					},
-					History: &History{
-						Weather: []*Weather{
-							{
-								TS: "2019-08-01T23:00:00.000Z",
-								TP: 37,
-								PR: 1007,
-								HU: 14,
-								WS: 1,
-								WD: 110,
-								IC: "01d",
+						{
+							TS:     "2019-08-04T18:00:00.000Z",
+							AQIUS:  57,
+							MAINUS: "p2",
+							AQICN:  28,
+							MAINCN: "o3",
+							P2: &Unit{
+								CONC:  15,
+								AQIUS: 57,
+								AQICN: 21,
 							},
-							{
-								TS: "2019-08-01T04:00:00.000Z",
-								TP: 31,
-								PR: 1005,
-								HU: 26,
-								WS: 1,
-								WD: 40,
-								IC: "01n",
+							P1: &Unit{
+								CONC:  22,
+								AQIUS: 20,
+								AQICN: 22,
 							},
-						},
-						Pollution: []*Pollution{
-							{
-								TS:     "2019-08-04T19:00:00.000Z",
-								AQIUS:  70,
-								MAINUS: "p2",
-								AQICN:  30,
-								MAINCN: "p2",
-								P2: &Unit{
-									CONC:  21,
-									AQIUS: 70,
-									AQICN: 30,
-								},
-								P1: &Unit{
-									CONC:  30,
-									AQIUS: 27,
-									AQICN: 30,
-								},
-								O3: &Unit{
-									CONC:  48,
-									AQIUS: 38,
-									AQICN: 30,
-								},
-								N2: &Unit{
-									CONC:  8,
-									AQIUS: 2,
-									AQICN: 8,
-								},
-								S2: &Unit{
-									CONC:  1,
-									AQIUS: 1,
-									AQICN: 3,
-								},
-								CO: &Unit{
-									CONC:  0.2,
-									AQIUS: 2,
-									AQICN: 2,
-								},
+							O3: &Unit{
+								CONC:  45,
+								AQIUS: 36,
+								AQICN: 28,
 							},
-							{
-								TS:     "2019-08-04T18:00:00.000Z",
-								AQIUS:  57,
-								MAINUS: "p2",
-								AQICN:  28,
-								MAINCN: "o3",
-								P2: &Unit{
-									CONC:  15,
-									AQIUS: 57,
-									AQICN: 21,
-								},
-								P1: &Unit{
-									CONC:  22,
-									AQIUS: 20,
-									AQICN: 22,
-								},
-								O3: &Unit{
-									CONC:  45,
-									AQIUS: 36,
-									AQICN: 28,
-								},
-								N2: &Unit{
-									CONC:  8,
-									AQIUS: 2,
-									AQICN: 8,
-								},
-								CO: &Unit{
-									CONC:  0.2,
-									AQIUS: 2,
-									AQICN: 2,
-								},
+							N2: &Unit{
+								CONC:  8,
+								AQIUS: 2,
+								AQICN: 8,
+							},
+							CO: &Unit{
+								CONC:  0.2,
+								AQIUS: 2,
+								AQICN: 2,
 							},
 						},
 					},
 				},
 			},
+			err: nil,
+		},
+		{
+			name: "nearest station by IP request failed",
+			result: `{
+  "status": "call_limit_reached",
+  "data": null
+}`,
+			want: nil,
+			err:  fmt.Errorf("unable to retrieve nearest station by IP address geolocation: %v", "call_limit_reached"),
 		},
 	}
 
@@ -815,11 +846,14 @@ func TestNearestStationIP(t *testing.T) {
 			client, server := mockClientServer(test.result)
 			defer server.Close()
 
-			got, _ := client.NearestStationIP()
+			got, err := client.NearestStationIP()
 			want := test.want
 
 			if !reflect.DeepEqual(want, got) {
 				t.Errorf("expected %#v , got %#v", want, got)
+			}
+			if !reflect.DeepEqual(test.err, err) {
+				t.Errorf("expected %#v , got %#v", test.err, err)
 			}
 		})
 	}
@@ -829,7 +863,8 @@ func TestNearestStationGPS(t *testing.T) {
 	tests := []struct {
 		name   string
 		result string
-		want   *NearestStation
+		want   *Station
+		err    error
 	}{
 		{
 			name: "nearest station by GPS request success",
@@ -1009,38 +1044,85 @@ func TestNearestStationGPS(t *testing.T) {
     }
   }
 }`,
-			want: &NearestStation{
-				Status: "success",
-				Data: &StationData{
-					Name:    "US Embassy in Beijing",
-					City:    "Beijing",
-					State:   "Beijing",
-					Country: "China",
-					Location: &Location{
-						Type:        "Point",
-						Coordinates: []float64{116.466258, 39.954352},
+			want: &Station{
+				Name:    "US Embassy in Beijing",
+				City:    "Beijing",
+				State:   "Beijing",
+				Country: "China",
+				Location: &Location{
+					Type:        "Point",
+					Coordinates: []float64{116.466258, 39.954352},
+				},
+				Forecasts: []*Forecast{
+					{
+						TS:    "2019-08-05T03:00:00.000Z",
+						AQIUS: 41,
+						AQICN: 14,
+						TP:    25,
+						TPMin: 25,
+						PR:    962,
+						HU:    65,
+						WS:    1,
+						WD:    228,
+						IC:    "03n",
 					},
-					Forecasts: []*Forecast{
-						{
-							TS:    "2019-08-05T03:00:00.000Z",
-							AQIUS: 41,
-							AQICN: 14,
-							TP:    25,
-							TPMin: 25,
-							PR:    962,
-							HU:    65,
-							WS:    1,
-							WD:    228,
-							IC:    "03n",
+					{
+						TS:    "2019-08-07T00:00:00.000Z",
+						AQIUS: 68,
+						AQICN: 29,
+					},
+				},
+				Current: &Current{
+					Weather: &Weather{
+						TS: "2019-08-01T23:00:00.000Z",
+						TP: 37,
+						PR: 1007,
+						HU: 14,
+						WS: 1,
+						WD: 110,
+						IC: "01d",
+					},
+					Pollution: &Pollution{
+						TS:     "2019-08-04T19:00:00.000Z",
+						AQIUS:  70,
+						MAINUS: "p2",
+						AQICN:  30,
+						MAINCN: "p2",
+						P2: &Unit{
+							CONC:  21,
+							AQIUS: 70,
+							AQICN: 30,
 						},
-						{
-							TS:    "2019-08-07T00:00:00.000Z",
-							AQIUS: 68,
-							AQICN: 29,
+						P1: &Unit{
+							CONC:  30,
+							AQIUS: 27,
+							AQICN: 30,
+						},
+						O3: &Unit{
+							CONC:  48,
+							AQIUS: 38,
+							AQICN: 30,
+						},
+						N2: &Unit{
+							CONC:  8,
+							AQIUS: 2,
+							AQICN: 8,
+						},
+						S2: &Unit{
+							CONC:  1,
+							AQIUS: 1,
+							AQICN: 3,
+						},
+						CO: &Unit{
+							CONC:  0.2,
+							AQIUS: 2,
+							AQICN: 2,
 						},
 					},
-					Current: &Current{
-						Weather: &Weather{
+				},
+				History: &History{
+					Weather: []*Weather{
+						{
 							TS: "2019-08-01T23:00:00.000Z",
 							TP: 37,
 							PR: 1007,
@@ -1049,7 +1131,18 @@ func TestNearestStationGPS(t *testing.T) {
 							WD: 110,
 							IC: "01d",
 						},
-						Pollution: &Pollution{
+						{
+							TS: "2019-08-01T04:00:00.000Z",
+							TP: 31,
+							PR: 1005,
+							HU: 26,
+							WS: 1,
+							WD: 40,
+							IC: "01n",
+						},
+					},
+					Pollution: []*Pollution{
+						{
 							TS:     "2019-08-04T19:00:00.000Z",
 							AQIUS:  70,
 							MAINUS: "p2",
@@ -1086,102 +1179,51 @@ func TestNearestStationGPS(t *testing.T) {
 								AQICN: 2,
 							},
 						},
-					},
-					History: &History{
-						Weather: []*Weather{
-							{
-								TS: "2019-08-01T23:00:00.000Z",
-								TP: 37,
-								PR: 1007,
-								HU: 14,
-								WS: 1,
-								WD: 110,
-								IC: "01d",
+						{
+							TS:     "2019-08-04T18:00:00.000Z",
+							AQIUS:  57,
+							MAINUS: "p2",
+							AQICN:  28,
+							MAINCN: "o3",
+							P2: &Unit{
+								CONC:  15,
+								AQIUS: 57,
+								AQICN: 21,
 							},
-							{
-								TS: "2019-08-01T04:00:00.000Z",
-								TP: 31,
-								PR: 1005,
-								HU: 26,
-								WS: 1,
-								WD: 40,
-								IC: "01n",
+							P1: &Unit{
+								CONC:  22,
+								AQIUS: 20,
+								AQICN: 22,
 							},
-						},
-						Pollution: []*Pollution{
-							{
-								TS:     "2019-08-04T19:00:00.000Z",
-								AQIUS:  70,
-								MAINUS: "p2",
-								AQICN:  30,
-								MAINCN: "p2",
-								P2: &Unit{
-									CONC:  21,
-									AQIUS: 70,
-									AQICN: 30,
-								},
-								P1: &Unit{
-									CONC:  30,
-									AQIUS: 27,
-									AQICN: 30,
-								},
-								O3: &Unit{
-									CONC:  48,
-									AQIUS: 38,
-									AQICN: 30,
-								},
-								N2: &Unit{
-									CONC:  8,
-									AQIUS: 2,
-									AQICN: 8,
-								},
-								S2: &Unit{
-									CONC:  1,
-									AQIUS: 1,
-									AQICN: 3,
-								},
-								CO: &Unit{
-									CONC:  0.2,
-									AQIUS: 2,
-									AQICN: 2,
-								},
+							O3: &Unit{
+								CONC:  45,
+								AQIUS: 36,
+								AQICN: 28,
 							},
-							{
-								TS:     "2019-08-04T18:00:00.000Z",
-								AQIUS:  57,
-								MAINUS: "p2",
-								AQICN:  28,
-								MAINCN: "o3",
-								P2: &Unit{
-									CONC:  15,
-									AQIUS: 57,
-									AQICN: 21,
-								},
-								P1: &Unit{
-									CONC:  22,
-									AQIUS: 20,
-									AQICN: 22,
-								},
-								O3: &Unit{
-									CONC:  45,
-									AQIUS: 36,
-									AQICN: 28,
-								},
-								N2: &Unit{
-									CONC:  8,
-									AQIUS: 2,
-									AQICN: 8,
-								},
-								CO: &Unit{
-									CONC:  0.2,
-									AQIUS: 2,
-									AQICN: 2,
-								},
+							N2: &Unit{
+								CONC:  8,
+								AQIUS: 2,
+								AQICN: 8,
+							},
+							CO: &Unit{
+								CONC:  0.2,
+								AQIUS: 2,
+								AQICN: 2,
 							},
 						},
 					},
 				},
 			},
+			err: nil,
+		},
+		{
+			name: "nearest station by GPS request failed",
+			result: `{
+  "status": "call_limit_reached",
+  "data": null
+}`,
+			want: nil,
+			err:  fmt.Errorf("unable to retrieve nearest station by GPS coordinates: %v", "call_limit_reached"),
 		},
 	}
 
@@ -1190,11 +1232,14 @@ func TestNearestStationGPS(t *testing.T) {
 			client, server := mockClientServer(test.result)
 			defer server.Close()
 
-			got, _ := client.NearestStationGPS(116.466258, 39.954352)
+			got, err := client.NearestStationGPS(116.466258, 39.954352)
 			want := test.want
 
 			if !reflect.DeepEqual(want, got) {
 				t.Errorf("expected %#v , got %#v", want, got)
+			}
+			if !reflect.DeepEqual(test.err, err) {
+				t.Errorf("expected %#v , got %#v", test.err, err)
 			}
 		})
 	}
