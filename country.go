@@ -5,29 +5,29 @@ import (
 	"net/url"
 )
 
-// Countries is an object returned from countries endpoint
+// Countries contains name of supported country
 type Countries struct {
-	Status string           `json:"status"`
-	Data   []*CountriesData `json:"data"`
-}
-
-// CountriesData contains information of a country
-type CountriesData struct {
 	Country string `json:"country"`
 }
 
 // Countries list supported countries
-func (c *Client) Countries() (*Countries, error) {
+func (c *Client) Countries() ([]*Countries, error) {
 	v := url.Values{}
 	v.Add("key", c.APIKey)
 
 	endpoint := c.endpoint(countriesEndpoint, v)
 
-	var countries Countries
-	err := c.request(endpoint, &countries)
+	payload := struct {
+		Status string       `json:"status"`
+		Data   []*Countries `json:"data"`
+	}{}
+	err := c.request(endpoint, &payload)
 	if err != nil {
-		return &countries, fmt.Errorf("unable to list countries: %v", err)
+		return nil, fmt.Errorf("unable to list countries: %v", err)
+	}
+	if payload.Status != "success" {
+		return nil, fmt.Errorf("unable to list countries: %v", payload.Status)
 	}
 
-	return &countries, nil
+	return payload.Data, nil
 }

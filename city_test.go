@@ -1,6 +1,7 @@
 package airvisual
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 )
@@ -9,7 +10,8 @@ func TestCities(t *testing.T) {
 	tests := []struct {
 		name   string
 		result string
-		want   *Cities
+		want   []*Cities
+		err    error
 	}{
 		{
 			name: "cities request success",
@@ -24,13 +26,20 @@ func TestCities(t *testing.T) {
     }
   ]
 }`,
-			want: &Cities{
-				Status: "success",
-				Data: []*CitiesData{
-					{City: "Addison"},
-					{City: "Albany"},
-				},
+			want: []*Cities{
+				{City: "Addison"},
+				{City: "Albany"},
 			},
+			err: nil,
+		},
+		{
+			name: "cities request failed",
+			result: `{
+  "status": "call_limit_reached",
+  "data": []
+}`,
+			want: nil,
+			err:  fmt.Errorf("unable to list cities: %v", "call_limit_reached"),
 		},
 	}
 
@@ -39,11 +48,14 @@ func TestCities(t *testing.T) {
 			client, server := mockClientServer(test.result)
 			defer server.Close()
 
-			got, _ := client.Cities("New York", "USA")
+			got, err := client.Cities("New York", "USA")
 			want := test.want
 
 			if !reflect.DeepEqual(want, got) {
 				t.Errorf("expected %#v , got %#v", want, got)
+			}
+			if !reflect.DeepEqual(test.err, err) {
+				t.Errorf("expected %#v , got %#v", test.err, err)
 			}
 		})
 	}
@@ -54,6 +66,7 @@ func TestCity(t *testing.T) {
 		name   string
 		result string
 		want   *City
+		err    error
 	}{
 		{
 			name: "city request success",
@@ -233,36 +246,83 @@ func TestCity(t *testing.T) {
   }
 }`,
 			want: &City{
-				Status: "success",
-				Data: &CityData{
-					City:    "Los Angeles",
-					State:   "California",
-					Country: "USA",
-					Location: &Location{
-						Type:        "Point",
-						Coordinates: []float64{-118.2417, 34.0669},
+				City:    "Los Angeles",
+				State:   "California",
+				Country: "USA",
+				Location: &Location{
+					Type:        "Point",
+					Coordinates: []float64{-118.2417, 34.0669},
+				},
+				Forecasts: []*Forecast{
+					{
+						TS:    "2019-08-05T03:00:00.000Z",
+						AQIUS: 41,
+						AQICN: 14,
+						TP:    25,
+						TPMin: 25,
+						PR:    962,
+						HU:    65,
+						WS:    1,
+						WD:    228,
+						IC:    "03n",
 					},
-					Forecasts: []*Forecast{
-						{
-							TS:    "2019-08-05T03:00:00.000Z",
-							AQIUS: 41,
-							AQICN: 14,
-							TP:    25,
-							TPMin: 25,
-							PR:    962,
-							HU:    65,
-							WS:    1,
-							WD:    228,
-							IC:    "03n",
+					{
+						TS:    "2019-08-07T00:00:00.000Z",
+						AQIUS: 68,
+						AQICN: 29,
+					},
+				},
+				Current: &Current{
+					Weather: &Weather{
+						TS: "2019-08-01T23:00:00.000Z",
+						TP: 37,
+						PR: 1007,
+						HU: 14,
+						WS: 1,
+						WD: 110,
+						IC: "01d",
+					},
+					Pollution: &Pollution{
+						TS:     "2019-08-04T19:00:00.000Z",
+						AQIUS:  70,
+						MAINUS: "p2",
+						AQICN:  30,
+						MAINCN: "p2",
+						P2: &Unit{
+							CONC:  21,
+							AQIUS: 70,
+							AQICN: 30,
 						},
-						{
-							TS:    "2019-08-07T00:00:00.000Z",
-							AQIUS: 68,
-							AQICN: 29,
+						P1: &Unit{
+							CONC:  30,
+							AQIUS: 27,
+							AQICN: 30,
+						},
+						O3: &Unit{
+							CONC:  48,
+							AQIUS: 38,
+							AQICN: 30,
+						},
+						N2: &Unit{
+							CONC:  8,
+							AQIUS: 2,
+							AQICN: 8,
+						},
+						S2: &Unit{
+							CONC:  1,
+							AQIUS: 1,
+							AQICN: 3,
+						},
+						CO: &Unit{
+							CONC:  0.2,
+							AQIUS: 2,
+							AQICN: 2,
 						},
 					},
-					Current: &Current{
-						Weather: &Weather{
+				},
+				History: &History{
+					Weather: []*Weather{
+						{
 							TS: "2019-08-01T23:00:00.000Z",
 							TP: 37,
 							PR: 1007,
@@ -271,7 +331,18 @@ func TestCity(t *testing.T) {
 							WD: 110,
 							IC: "01d",
 						},
-						Pollution: &Pollution{
+						{
+							TS: "2019-08-01T04:00:00.000Z",
+							TP: 31,
+							PR: 1005,
+							HU: 26,
+							WS: 1,
+							WD: 40,
+							IC: "01n",
+						},
+					},
+					Pollution: []*Pollution{
+						{
 							TS:     "2019-08-04T19:00:00.000Z",
 							AQIUS:  70,
 							MAINUS: "p2",
@@ -308,102 +379,51 @@ func TestCity(t *testing.T) {
 								AQICN: 2,
 							},
 						},
-					},
-					History: &History{
-						Weather: []*Weather{
-							{
-								TS: "2019-08-01T23:00:00.000Z",
-								TP: 37,
-								PR: 1007,
-								HU: 14,
-								WS: 1,
-								WD: 110,
-								IC: "01d",
+						{
+							TS:     "2019-08-04T18:00:00.000Z",
+							AQIUS:  57,
+							MAINUS: "p2",
+							AQICN:  28,
+							MAINCN: "o3",
+							P2: &Unit{
+								CONC:  15,
+								AQIUS: 57,
+								AQICN: 21,
 							},
-							{
-								TS: "2019-08-01T04:00:00.000Z",
-								TP: 31,
-								PR: 1005,
-								HU: 26,
-								WS: 1,
-								WD: 40,
-								IC: "01n",
+							P1: &Unit{
+								CONC:  22,
+								AQIUS: 20,
+								AQICN: 22,
 							},
-						},
-						Pollution: []*Pollution{
-							{
-								TS:     "2019-08-04T19:00:00.000Z",
-								AQIUS:  70,
-								MAINUS: "p2",
-								AQICN:  30,
-								MAINCN: "p2",
-								P2: &Unit{
-									CONC:  21,
-									AQIUS: 70,
-									AQICN: 30,
-								},
-								P1: &Unit{
-									CONC:  30,
-									AQIUS: 27,
-									AQICN: 30,
-								},
-								O3: &Unit{
-									CONC:  48,
-									AQIUS: 38,
-									AQICN: 30,
-								},
-								N2: &Unit{
-									CONC:  8,
-									AQIUS: 2,
-									AQICN: 8,
-								},
-								S2: &Unit{
-									CONC:  1,
-									AQIUS: 1,
-									AQICN: 3,
-								},
-								CO: &Unit{
-									CONC:  0.2,
-									AQIUS: 2,
-									AQICN: 2,
-								},
+							O3: &Unit{
+								CONC:  45,
+								AQIUS: 36,
+								AQICN: 28,
 							},
-							{
-								TS:     "2019-08-04T18:00:00.000Z",
-								AQIUS:  57,
-								MAINUS: "p2",
-								AQICN:  28,
-								MAINCN: "o3",
-								P2: &Unit{
-									CONC:  15,
-									AQIUS: 57,
-									AQICN: 21,
-								},
-								P1: &Unit{
-									CONC:  22,
-									AQIUS: 20,
-									AQICN: 22,
-								},
-								O3: &Unit{
-									CONC:  45,
-									AQIUS: 36,
-									AQICN: 28,
-								},
-								N2: &Unit{
-									CONC:  8,
-									AQIUS: 2,
-									AQICN: 8,
-								},
-								CO: &Unit{
-									CONC:  0.2,
-									AQIUS: 2,
-									AQICN: 2,
-								},
+							N2: &Unit{
+								CONC:  8,
+								AQIUS: 2,
+								AQICN: 8,
+							},
+							CO: &Unit{
+								CONC:  0.2,
+								AQIUS: 2,
+								AQICN: 2,
 							},
 						},
 					},
 				},
 			},
+			err: nil,
+		},
+		{
+			name: "city request failed",
+			result: `{
+  "status": "call_limit_reached",
+  "data": null
+}`,
+			want: nil,
+			err:  fmt.Errorf("unable to retrieve city data: %v", "call_limit_reached"),
 		},
 	}
 
@@ -412,11 +432,14 @@ func TestCity(t *testing.T) {
 			client, server := mockClientServer(test.result)
 			defer server.Close()
 
-			got, _ := client.City("Los Angeles", "California", "USA")
+			got, err := client.City("Los Angeles", "California", "USA")
 			want := test.want
 
 			if !reflect.DeepEqual(want, got) {
 				t.Errorf("expected %#v , got %#v", want, got)
+			}
+			if !reflect.DeepEqual(test.err, err) {
+				t.Errorf("expected %#v , got %#v", test.err, err)
 			}
 		})
 	}
@@ -426,7 +449,8 @@ func TestNearestCityIP(t *testing.T) {
 	tests := []struct {
 		name   string
 		result string
-		want   *NearestCity
+		want   *City
+		err    error
 	}{
 		{
 			name: "nearest city by IP request success",
@@ -605,37 +629,84 @@ func TestNearestCityIP(t *testing.T) {
     }
   }
 }`,
-			want: &NearestCity{
-				Status: "success",
-				Data: &CityData{
-					City:    "Los Angeles",
-					State:   "California",
-					Country: "USA",
-					Location: &Location{
-						Type:        "Point",
-						Coordinates: []float64{-118.2417, 34.0669},
+			want: &City{
+				City:    "Los Angeles",
+				State:   "California",
+				Country: "USA",
+				Location: &Location{
+					Type:        "Point",
+					Coordinates: []float64{-118.2417, 34.0669},
+				},
+				Forecasts: []*Forecast{
+					{
+						TS:    "2019-08-05T03:00:00.000Z",
+						AQIUS: 41,
+						AQICN: 14,
+						TP:    25,
+						TPMin: 25,
+						PR:    962,
+						HU:    65,
+						WS:    1,
+						WD:    228,
+						IC:    "03n",
 					},
-					Forecasts: []*Forecast{
-						{
-							TS:    "2019-08-05T03:00:00.000Z",
-							AQIUS: 41,
-							AQICN: 14,
-							TP:    25,
-							TPMin: 25,
-							PR:    962,
-							HU:    65,
-							WS:    1,
-							WD:    228,
-							IC:    "03n",
+					{
+						TS:    "2019-08-07T00:00:00.000Z",
+						AQIUS: 68,
+						AQICN: 29,
+					},
+				},
+				Current: &Current{
+					Weather: &Weather{
+						TS: "2019-08-01T23:00:00.000Z",
+						TP: 37,
+						PR: 1007,
+						HU: 14,
+						WS: 1,
+						WD: 110,
+						IC: "01d",
+					},
+					Pollution: &Pollution{
+						TS:     "2019-08-04T19:00:00.000Z",
+						AQIUS:  70,
+						MAINUS: "p2",
+						AQICN:  30,
+						MAINCN: "p2",
+						P2: &Unit{
+							CONC:  21,
+							AQIUS: 70,
+							AQICN: 30,
 						},
-						{
-							TS:    "2019-08-07T00:00:00.000Z",
-							AQIUS: 68,
-							AQICN: 29,
+						P1: &Unit{
+							CONC:  30,
+							AQIUS: 27,
+							AQICN: 30,
+						},
+						O3: &Unit{
+							CONC:  48,
+							AQIUS: 38,
+							AQICN: 30,
+						},
+						N2: &Unit{
+							CONC:  8,
+							AQIUS: 2,
+							AQICN: 8,
+						},
+						S2: &Unit{
+							CONC:  1,
+							AQIUS: 1,
+							AQICN: 3,
+						},
+						CO: &Unit{
+							CONC:  0.2,
+							AQIUS: 2,
+							AQICN: 2,
 						},
 					},
-					Current: &Current{
-						Weather: &Weather{
+				},
+				History: &History{
+					Weather: []*Weather{
+						{
 							TS: "2019-08-01T23:00:00.000Z",
 							TP: 37,
 							PR: 1007,
@@ -644,7 +715,18 @@ func TestNearestCityIP(t *testing.T) {
 							WD: 110,
 							IC: "01d",
 						},
-						Pollution: &Pollution{
+						{
+							TS: "2019-08-01T04:00:00.000Z",
+							TP: 31,
+							PR: 1005,
+							HU: 26,
+							WS: 1,
+							WD: 40,
+							IC: "01n",
+						},
+					},
+					Pollution: []*Pollution{
+						{
 							TS:     "2019-08-04T19:00:00.000Z",
 							AQIUS:  70,
 							MAINUS: "p2",
@@ -681,102 +763,51 @@ func TestNearestCityIP(t *testing.T) {
 								AQICN: 2,
 							},
 						},
-					},
-					History: &History{
-						Weather: []*Weather{
-							{
-								TS: "2019-08-01T23:00:00.000Z",
-								TP: 37,
-								PR: 1007,
-								HU: 14,
-								WS: 1,
-								WD: 110,
-								IC: "01d",
+						{
+							TS:     "2019-08-04T18:00:00.000Z",
+							AQIUS:  57,
+							MAINUS: "p2",
+							AQICN:  28,
+							MAINCN: "o3",
+							P2: &Unit{
+								CONC:  15,
+								AQIUS: 57,
+								AQICN: 21,
 							},
-							{
-								TS: "2019-08-01T04:00:00.000Z",
-								TP: 31,
-								PR: 1005,
-								HU: 26,
-								WS: 1,
-								WD: 40,
-								IC: "01n",
+							P1: &Unit{
+								CONC:  22,
+								AQIUS: 20,
+								AQICN: 22,
 							},
-						},
-						Pollution: []*Pollution{
-							{
-								TS:     "2019-08-04T19:00:00.000Z",
-								AQIUS:  70,
-								MAINUS: "p2",
-								AQICN:  30,
-								MAINCN: "p2",
-								P2: &Unit{
-									CONC:  21,
-									AQIUS: 70,
-									AQICN: 30,
-								},
-								P1: &Unit{
-									CONC:  30,
-									AQIUS: 27,
-									AQICN: 30,
-								},
-								O3: &Unit{
-									CONC:  48,
-									AQIUS: 38,
-									AQICN: 30,
-								},
-								N2: &Unit{
-									CONC:  8,
-									AQIUS: 2,
-									AQICN: 8,
-								},
-								S2: &Unit{
-									CONC:  1,
-									AQIUS: 1,
-									AQICN: 3,
-								},
-								CO: &Unit{
-									CONC:  0.2,
-									AQIUS: 2,
-									AQICN: 2,
-								},
+							O3: &Unit{
+								CONC:  45,
+								AQIUS: 36,
+								AQICN: 28,
 							},
-							{
-								TS:     "2019-08-04T18:00:00.000Z",
-								AQIUS:  57,
-								MAINUS: "p2",
-								AQICN:  28,
-								MAINCN: "o3",
-								P2: &Unit{
-									CONC:  15,
-									AQIUS: 57,
-									AQICN: 21,
-								},
-								P1: &Unit{
-									CONC:  22,
-									AQIUS: 20,
-									AQICN: 22,
-								},
-								O3: &Unit{
-									CONC:  45,
-									AQIUS: 36,
-									AQICN: 28,
-								},
-								N2: &Unit{
-									CONC:  8,
-									AQIUS: 2,
-									AQICN: 8,
-								},
-								CO: &Unit{
-									CONC:  0.2,
-									AQIUS: 2,
-									AQICN: 2,
-								},
+							N2: &Unit{
+								CONC:  8,
+								AQIUS: 2,
+								AQICN: 8,
+							},
+							CO: &Unit{
+								CONC:  0.2,
+								AQIUS: 2,
+								AQICN: 2,
 							},
 						},
 					},
 				},
 			},
+			err: nil,
+		},
+		{
+			name: "nearest city by IP request failed",
+			result: `{
+  "status": "call_limit_reached",
+  "data": null
+}`,
+			want: nil,
+			err:  fmt.Errorf("unable to retrieve nearest city by IP address geolocation: %v", "call_limit_reached"),
 		},
 	}
 
@@ -785,11 +816,14 @@ func TestNearestCityIP(t *testing.T) {
 			client, server := mockClientServer(test.result)
 			defer server.Close()
 
-			got, _ := client.NearestCityIP()
+			got, err := client.NearestCityIP()
 			want := test.want
 
 			if !reflect.DeepEqual(want, got) {
 				t.Errorf("expected %#v , got %#v", want, got)
+			}
+			if !reflect.DeepEqual(test.err, err) {
+				t.Errorf("expected %#v , got %#v", test.err, err)
 			}
 		})
 	}
@@ -799,7 +833,8 @@ func TestNearestCityGPS(t *testing.T) {
 	tests := []struct {
 		name   string
 		result string
-		want   *NearestCity
+		want   *City
+		err    error
 	}{
 		{
 			name: "nearest city by IP request success",
@@ -978,37 +1013,84 @@ func TestNearestCityGPS(t *testing.T) {
     }
   }
 }`,
-			want: &NearestCity{
-				Status: "success",
-				Data: &CityData{
-					City:    "Los Angeles",
-					State:   "California",
-					Country: "USA",
-					Location: &Location{
-						Type:        "Point",
-						Coordinates: []float64{-118.2417, 34.0669},
+			want: &City{
+				City:    "Los Angeles",
+				State:   "California",
+				Country: "USA",
+				Location: &Location{
+					Type:        "Point",
+					Coordinates: []float64{-118.2417, 34.0669},
+				},
+				Forecasts: []*Forecast{
+					{
+						TS:    "2019-08-05T03:00:00.000Z",
+						AQIUS: 41,
+						AQICN: 14,
+						TP:    25,
+						TPMin: 25,
+						PR:    962,
+						HU:    65,
+						WS:    1,
+						WD:    228,
+						IC:    "03n",
 					},
-					Forecasts: []*Forecast{
-						{
-							TS:    "2019-08-05T03:00:00.000Z",
-							AQIUS: 41,
-							AQICN: 14,
-							TP:    25,
-							TPMin: 25,
-							PR:    962,
-							HU:    65,
-							WS:    1,
-							WD:    228,
-							IC:    "03n",
+					{
+						TS:    "2019-08-07T00:00:00.000Z",
+						AQIUS: 68,
+						AQICN: 29,
+					},
+				},
+				Current: &Current{
+					Weather: &Weather{
+						TS: "2019-08-01T23:00:00.000Z",
+						TP: 37,
+						PR: 1007,
+						HU: 14,
+						WS: 1,
+						WD: 110,
+						IC: "01d",
+					},
+					Pollution: &Pollution{
+						TS:     "2019-08-04T19:00:00.000Z",
+						AQIUS:  70,
+						MAINUS: "p2",
+						AQICN:  30,
+						MAINCN: "p2",
+						P2: &Unit{
+							CONC:  21,
+							AQIUS: 70,
+							AQICN: 30,
 						},
-						{
-							TS:    "2019-08-07T00:00:00.000Z",
-							AQIUS: 68,
-							AQICN: 29,
+						P1: &Unit{
+							CONC:  30,
+							AQIUS: 27,
+							AQICN: 30,
+						},
+						O3: &Unit{
+							CONC:  48,
+							AQIUS: 38,
+							AQICN: 30,
+						},
+						N2: &Unit{
+							CONC:  8,
+							AQIUS: 2,
+							AQICN: 8,
+						},
+						S2: &Unit{
+							CONC:  1,
+							AQIUS: 1,
+							AQICN: 3,
+						},
+						CO: &Unit{
+							CONC:  0.2,
+							AQIUS: 2,
+							AQICN: 2,
 						},
 					},
-					Current: &Current{
-						Weather: &Weather{
+				},
+				History: &History{
+					Weather: []*Weather{
+						{
 							TS: "2019-08-01T23:00:00.000Z",
 							TP: 37,
 							PR: 1007,
@@ -1017,7 +1099,18 @@ func TestNearestCityGPS(t *testing.T) {
 							WD: 110,
 							IC: "01d",
 						},
-						Pollution: &Pollution{
+						{
+							TS: "2019-08-01T04:00:00.000Z",
+							TP: 31,
+							PR: 1005,
+							HU: 26,
+							WS: 1,
+							WD: 40,
+							IC: "01n",
+						},
+					},
+					Pollution: []*Pollution{
+						{
 							TS:     "2019-08-04T19:00:00.000Z",
 							AQIUS:  70,
 							MAINUS: "p2",
@@ -1054,102 +1147,51 @@ func TestNearestCityGPS(t *testing.T) {
 								AQICN: 2,
 							},
 						},
-					},
-					History: &History{
-						Weather: []*Weather{
-							{
-								TS: "2019-08-01T23:00:00.000Z",
-								TP: 37,
-								PR: 1007,
-								HU: 14,
-								WS: 1,
-								WD: 110,
-								IC: "01d",
+						{
+							TS:     "2019-08-04T18:00:00.000Z",
+							AQIUS:  57,
+							MAINUS: "p2",
+							AQICN:  28,
+							MAINCN: "o3",
+							P2: &Unit{
+								CONC:  15,
+								AQIUS: 57,
+								AQICN: 21,
 							},
-							{
-								TS: "2019-08-01T04:00:00.000Z",
-								TP: 31,
-								PR: 1005,
-								HU: 26,
-								WS: 1,
-								WD: 40,
-								IC: "01n",
+							P1: &Unit{
+								CONC:  22,
+								AQIUS: 20,
+								AQICN: 22,
 							},
-						},
-						Pollution: []*Pollution{
-							{
-								TS:     "2019-08-04T19:00:00.000Z",
-								AQIUS:  70,
-								MAINUS: "p2",
-								AQICN:  30,
-								MAINCN: "p2",
-								P2: &Unit{
-									CONC:  21,
-									AQIUS: 70,
-									AQICN: 30,
-								},
-								P1: &Unit{
-									CONC:  30,
-									AQIUS: 27,
-									AQICN: 30,
-								},
-								O3: &Unit{
-									CONC:  48,
-									AQIUS: 38,
-									AQICN: 30,
-								},
-								N2: &Unit{
-									CONC:  8,
-									AQIUS: 2,
-									AQICN: 8,
-								},
-								S2: &Unit{
-									CONC:  1,
-									AQIUS: 1,
-									AQICN: 3,
-								},
-								CO: &Unit{
-									CONC:  0.2,
-									AQIUS: 2,
-									AQICN: 2,
-								},
+							O3: &Unit{
+								CONC:  45,
+								AQIUS: 36,
+								AQICN: 28,
 							},
-							{
-								TS:     "2019-08-04T18:00:00.000Z",
-								AQIUS:  57,
-								MAINUS: "p2",
-								AQICN:  28,
-								MAINCN: "o3",
-								P2: &Unit{
-									CONC:  15,
-									AQIUS: 57,
-									AQICN: 21,
-								},
-								P1: &Unit{
-									CONC:  22,
-									AQIUS: 20,
-									AQICN: 22,
-								},
-								O3: &Unit{
-									CONC:  45,
-									AQIUS: 36,
-									AQICN: 28,
-								},
-								N2: &Unit{
-									CONC:  8,
-									AQIUS: 2,
-									AQICN: 8,
-								},
-								CO: &Unit{
-									CONC:  0.2,
-									AQIUS: 2,
-									AQICN: 2,
-								},
+							N2: &Unit{
+								CONC:  8,
+								AQIUS: 2,
+								AQICN: 8,
+							},
+							CO: &Unit{
+								CONC:  0.2,
+								AQIUS: 2,
+								AQICN: 2,
 							},
 						},
 					},
 				},
 			},
+			err: nil,
+		},
+		{
+			name: "nearest city by IP request failed",
+			result: `{
+  "status": "call_limit_reached",
+  "data": null
+}`,
+			want: nil,
+			err:  fmt.Errorf("unable to retrieve nearest city by GPS coordinates: %v", "call_limit_reached"),
 		},
 	}
 
@@ -1158,11 +1200,14 @@ func TestNearestCityGPS(t *testing.T) {
 			client, server := mockClientServer(test.result)
 			defer server.Close()
 
-			got, _ := client.NearestCityGPS(-118.2417, 34.0669)
+			got, err := client.NearestCityGPS(-118.2417, 34.0669)
 			want := test.want
 
 			if !reflect.DeepEqual(want, got) {
 				t.Errorf("expected %#v , got %#v", want, got)
+			}
+			if !reflect.DeepEqual(test.err, err) {
+				t.Errorf("expected %#v , got %#v", test.err, err)
 			}
 		})
 	}
@@ -1172,7 +1217,8 @@ func TestCityRanking(t *testing.T) {
 	tests := []struct {
 		name   string
 		result string
-		want   *CityRanking
+		want   []*CityRanking
+		err    error
 	}{
 		{
 			name: "city ranking request success",
@@ -1199,29 +1245,36 @@ func TestCityRanking(t *testing.T) {
     }
   ]
 }`,
-			want: &CityRanking{
-				Status: "success",
-				Data: []*CityRankingData{
-					{
-						City:    "Portland",
-						State:   "Oregon",
-						Country: "USA",
-						Ranking: &Ranking{
-							CurrentAQI:   183,
-							CurrentAQICN: 154,
-						},
+			want: []*CityRanking{
+				{
+					City:    "Portland",
+					State:   "Oregon",
+					Country: "USA",
+					Ranking: &Ranking{
+						CurrentAQI:   183,
+						CurrentAQICN: 154,
 					},
-					{
-						City:    "Eugene",
-						State:   "Oregon",
-						Country: "USA",
-						Ranking: &Ranking{
-							CurrentAQI:   151,
-							CurrentAQICN: 77,
-						},
+				},
+				{
+					City:    "Eugene",
+					State:   "Oregon",
+					Country: "USA",
+					Ranking: &Ranking{
+						CurrentAQI:   151,
+						CurrentAQICN: 77,
 					},
 				},
 			},
+			err: nil,
+		},
+		{
+			name: "city ranking request failed",
+			result: `{
+  "status": "call_limit_reached",
+  "data": []
+}`,
+			want: nil,
+			err:  fmt.Errorf("unable to list city ranking: %v", "call_limit_reached"),
 		},
 	}
 
@@ -1230,11 +1283,14 @@ func TestCityRanking(t *testing.T) {
 			client, server := mockClientServer(test.result)
 			defer server.Close()
 
-			got, _ := client.CityRanking()
+			got, err := client.CityRanking()
 			want := test.want
 
 			if !reflect.DeepEqual(want, got) {
 				t.Errorf("expected %#v , got %#v", want, got)
+			}
+			if !reflect.DeepEqual(test.err, err) {
+				t.Errorf("expected %#v , got %#v", test.err, err)
 			}
 		})
 	}

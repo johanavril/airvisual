@@ -6,19 +6,13 @@ import (
 	"strconv"
 )
 
-// Cities is an object returned from cities endpoint
+// Cities contains name of supported city
 type Cities struct {
-	Status string        `json:"status"`
-	Data   []*CitiesData `json:"data"`
-}
-
-// CitiesData contains information of a city
-type CitiesData struct {
 	City string `json:"city"`
 }
 
 // Cities list supported cities in the specified state
-func (c *Client) Cities(state, country string) (*Cities, error) {
+func (c *Client) Cities(state, country string) ([]*Cities, error) {
 	v := url.Values{}
 	v.Add("key", c.APIKey)
 	v.Add("country", country)
@@ -26,23 +20,23 @@ func (c *Client) Cities(state, country string) (*Cities, error) {
 
 	endpoint := c.endpoint(citiesEndpoint, v)
 
-	var cities Cities
-	err := c.request(endpoint, &cities)
+	payload := struct {
+		Status string    `json:"status"`
+		Data   []*Cities `json:"data"`
+	}{}
+	err := c.request(endpoint, &payload)
 	if err != nil {
-		return &cities, fmt.Errorf("unable to list cities: %v", err)
+		return nil, fmt.Errorf("unable to list cities: %v", err)
+	}
+	if payload.Status != "success" {
+		return nil, fmt.Errorf("unable to list cities: %v", payload.Status)
 	}
 
-	return &cities, nil
+	return payload.Data, nil
 }
 
-// City is an object returned from city endpoint
+// City contains data regarding forecast of a specific city
 type City struct {
-	Status string    `json:"status"`
-	Data   *CityData `json:"data"`
-}
-
-// CityData contains data regarding forecast of a specific city
-type CityData struct {
 	City      string      `json:"city"`
 	State     string      `json:"state"`
 	Country   string      `json:"country"`
@@ -62,39 +56,45 @@ func (c *Client) City(city, state, country string) (*City, error) {
 
 	endpoint := c.endpoint(cityEndpoint, v)
 
-	var ci City
-	err := c.request(endpoint, &ci)
+	payload := struct {
+		Status string `json:"status"`
+		Data   *City  `json:"data"`
+	}{}
+	err := c.request(endpoint, &payload)
 	if err != nil {
-		return &ci, fmt.Errorf("unable to retrieve city data: %v", err)
+		return nil, fmt.Errorf("unable to retrieve city data: %v", err)
+	}
+	if payload.Status != "success" {
+		return nil, fmt.Errorf("unable to retrieve city data: %v", payload.Status)
 	}
 
-	return &ci, nil
-}
-
-// NearestCity is an object returned from nearest city endpoint
-type NearestCity struct {
-	Status string    `json:"status"`
-	Data   *CityData `json:"data"`
+	return payload.Data, nil
 }
 
 // NearestCityIP return nearest city's data using IP address geolocation
-func (c *Client) NearestCityIP() (*NearestCity, error) {
+func (c *Client) NearestCityIP() (*City, error) {
 	v := url.Values{}
 	v.Add("key", c.APIKey)
 
 	endpoint := c.endpoint(nearestCityEndpoint, v)
 
-	var nearestCity NearestCity
-	err := c.request(endpoint, &nearestCity)
+	payload := struct {
+		Status string `json:"status"`
+		Data   *City  `json:"data"`
+	}{}
+	err := c.request(endpoint, &payload)
 	if err != nil {
-		return &nearestCity, fmt.Errorf("unable to retrieve nearest city by IP address geolocation: %v", err)
+		return nil, fmt.Errorf("unable to retrieve nearest city by IP address geolocation: %v", err)
+	}
+	if payload.Status != "success" {
+		return nil, fmt.Errorf("unable to retrieve nearest city by IP address geolocation: %v", payload.Status)
 	}
 
-	return &nearestCity, nil
+	return payload.Data, nil
 }
 
 // NearestCityGPS return nearest city's data using specified GPS coordinates
-func (c *Client) NearestCityGPS(lat, lon float64) (*NearestCity, error) {
+func (c *Client) NearestCityGPS(lat, lon float64) (*City, error) {
 	v := url.Values{}
 	v.Add("key", c.APIKey)
 	v.Add("lat", strconv.FormatFloat(lat, 'f', -1, 64))
@@ -102,23 +102,23 @@ func (c *Client) NearestCityGPS(lat, lon float64) (*NearestCity, error) {
 
 	endpoint := c.endpoint(nearestCityEndpoint, v)
 
-	var nearestCity NearestCity
-	err := c.request(endpoint, &nearestCity)
+	payload := struct {
+		Status string `json:"status"`
+		Data   *City  `json:"data"`
+	}{}
+	err := c.request(endpoint, &payload)
 	if err != nil {
-		return &nearestCity, fmt.Errorf("unable to retrieve nearest city by GPS coordinates: %v", err)
+		return nil, fmt.Errorf("unable to retrieve nearest city by GPS coordinates: %v", err)
+	}
+	if payload.Status != "success" {
+		return nil, fmt.Errorf("unable to retrieve nearest city by GPS coordinates: %v", payload.Status)
 	}
 
-	return &nearestCity, nil
+	return payload.Data, nil
 }
 
-// CityRanking is an object returned from city ranking endpoint
+// CityRanking contains ranking information of a city
 type CityRanking struct {
-	Status string             `json:"status"`
-	Data   []*CityRankingData `json:"data"`
-}
-
-// CityRankingData contains ranking information of a city
-type CityRankingData struct {
 	City    string   `json:"city"`
 	State   string   `json:"state"`
 	Country string   `json:"country"`
@@ -126,17 +126,23 @@ type CityRankingData struct {
 }
 
 // CityRanking return sorted array of selected major cities in the world from highest to lowest AQI
-func (c *Client) CityRanking() (*CityRanking, error) {
+func (c *Client) CityRanking() ([]*CityRanking, error) {
 	v := url.Values{}
 	v.Add("key", c.APIKey)
 
 	endpoint := c.endpoint(cityRankingEndpoint, v)
 
-	var cityRanking CityRanking
-	err := c.request(endpoint, &cityRanking)
+	payload := struct {
+		Status string         `json:"status"`
+		Data   []*CityRanking `json:"data"`
+	}{}
+	err := c.request(endpoint, &payload)
 	if err != nil {
-		return &cityRanking, fmt.Errorf("unable to list city ranking: %v", err)
+		return nil, fmt.Errorf("unable to list city ranking: %v", err)
+	}
+	if payload.Status != "success" {
+		return nil, fmt.Errorf("unable to list city ranking: %v", payload.Status)
 	}
 
-	return &cityRanking, nil
+	return payload.Data, nil
 }

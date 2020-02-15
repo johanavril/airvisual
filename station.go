@@ -6,20 +6,14 @@ import (
 	"strconv"
 )
 
-// Stations is an object returned from stations endpoint
+// Stations contains information of a station
 type Stations struct {
-	Status string          `json:"status"`
-	Data   []*StationsData `json:"data"`
-}
-
-// StationsData contains information of a station
-type StationsData struct {
 	Location *Location `json:"location"`
 	Station  string    `json:"station"`
 }
 
 // Stations list supported active stations inside a specified city
-func (c *Client) Stations(city, state, country string) (*Stations, error) {
+func (c *Client) Stations(city, state, country string) ([]*Stations, error) {
 	v := url.Values{}
 	v.Add("key", c.APIKey)
 	v.Add("country", country)
@@ -28,23 +22,23 @@ func (c *Client) Stations(city, state, country string) (*Stations, error) {
 
 	endpoint := c.endpoint(stationsEndpoint, v)
 
-	var stations Stations
-	err := c.request(endpoint, &stations)
+	payload := struct {
+		Status string      `json:"status"`
+		Data   []*Stations `json:"data"`
+	}{}
+	err := c.request(endpoint, &payload)
 	if err != nil {
-		return &stations, fmt.Errorf("unable to list supported stations: %v", err)
+		return nil, fmt.Errorf("unable to list stations: %v", err)
+	}
+	if payload.Status != "success" {
+		return nil, fmt.Errorf("unable to list stations: %v", payload.Status)
 	}
 
-	return &stations, nil
+	return payload.Data, nil
 }
 
-// Station is an object returned from station endpoint
+// Station contains data regarding forecast of a specific station
 type Station struct {
-	Status string       `json:"status"`
-	Data   *StationData `json:"data"`
-}
-
-// StationData contains data regarding forecast of a specific station
-type StationData struct {
 	Name      string      `json:"name"`
 	City      string      `json:"city"`
 	State     string      `json:"state"`
@@ -66,40 +60,46 @@ func (c *Client) Station(station, city, state, country string) (*Station, error)
 
 	endpoint := c.endpoint(stationEndpoint, v)
 
-	var st Station
-	err := c.request(endpoint, &st)
+	payload := struct {
+		Status string   `json:"status"`
+		Data   *Station `json:"data"`
+	}{}
+	err := c.request(endpoint, &payload)
 	if err != nil {
-		return &st, fmt.Errorf("unable to retrieve station data: %v", err)
+		return nil, fmt.Errorf("unable to retrieve station data: %v", err)
+	}
+	if payload.Status != "success" {
+		return nil, fmt.Errorf("unable to retrieve station data: %v", payload.Status)
 	}
 
-	return &st, nil
-}
-
-// NearestStation is an object returned from nearest station endpoint
-type NearestStation struct {
-	Status string       `json:"status"`
-	Data   *StationData `json:"data"`
+	return payload.Data, nil
 }
 
 // NearestStationIP return nearest station's data using IP address geolocation
-func (c *Client) NearestStationIP() (*NearestStation, error) {
+func (c *Client) NearestStationIP() (*Station, error) {
 	v := url.Values{}
 	v.Add("key", c.APIKey)
 
 	endpoint := c.endpoint(nearestStationEndpoint, v)
 
-	var nearestStation NearestStation
-	err := c.request(endpoint, &nearestStation)
+	payload := struct {
+		Status string   `json:"status"`
+		Data   *Station `json:"data"`
+	}{}
+	err := c.request(endpoint, &payload)
 	if err != nil {
-		return &nearestStation, fmt.Errorf("unable to retrieve nearest station by IP address geolocation: %v", err)
+		return nil, fmt.Errorf("unable to retrieve nearest station by IP address geolocation: %v", err)
+	}
+	if payload.Status != "success" {
+		return nil, fmt.Errorf("unable to retrieve nearest station by IP address geolocation: %v", payload.Status)
 	}
 
-	return &nearestStation, nil
+	return payload.Data, nil
 
 }
 
 // NearestStationGPS return nearest station's data using specified GPS coordinates
-func (c *Client) NearestStationGPS(lat, lon float64) (*NearestStation, error) {
+func (c *Client) NearestStationGPS(lat, lon float64) (*Station, error) {
 	v := url.Values{}
 	v.Add("key", c.APIKey)
 	v.Add("lat", strconv.FormatFloat(lat, 'f', -1, 64))
@@ -107,11 +107,17 @@ func (c *Client) NearestStationGPS(lat, lon float64) (*NearestStation, error) {
 
 	endpoint := c.endpoint(nearestStationEndpoint, v)
 
-	var nearestStation NearestStation
-	err := c.request(endpoint, &nearestStation)
+	payload := struct {
+		Status string   `json:"status"`
+		Data   *Station `json:"data"`
+	}{}
+	err := c.request(endpoint, &payload)
 	if err != nil {
-		return &nearestStation, fmt.Errorf("unable to retrieve nearest station by GPS coordinates: %v", err)
+		return nil, fmt.Errorf("unable to retrieve nearest station by GPS coordinates: %v", err)
+	}
+	if payload.Status != "success" {
+		return nil, fmt.Errorf("unable to retrieve nearest station by GPS coordinates: %v", payload.Status)
 	}
 
-	return &nearestStation, nil
+	return payload.Data, nil
 }
